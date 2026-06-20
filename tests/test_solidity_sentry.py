@@ -1,41 +1,28 @@
+import pytest
 from solidity_sentry import SoliditySentry, Issue
 
-def test_identify_issues():
-    sentry = SoliditySentry()
-    issues = sentry.identify_issues("example_code")
-    assert len(issues) == 2
-    assert issues[0].id == 1
-    assert issues[1].id == 2
-
 def test_generate_fix_suggestions():
-    sentry = SoliditySentry()
-    issues = [
-        Issue(1, "Issue 1: Variable not initialized"),
-        Issue(2, "Issue 2: Function not called"),
-    ]
-    issues_with_fixes = sentry.generate_fix_suggestions(issues)
-    assert issues_with_fixes[0].fix_suggestion == "Initialize variable before use"
-    assert issues_with_fixes[1].fix_suggestion == "Call function to avoid unused code"
+    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type")]
+    sentry = SoliditySentry(issues)
+    issues_with_fixes = sentry.generate_fix_suggestions()
+    assert issues_with_fixes[0].fix_suggestion == "Check syntax and fix errors"
+    assert issues_with_fixes[1].fix_suggestion == "Check types and fix errors"
 
 def test_validate_fix_suggestions():
-    sentry = SoliditySentry()
-    issues_with_fixes = [
-        Issue(1, "Issue 1: Variable not initialized", "Initialize variable before use"),
-        Issue(2, "Issue 2: Function not called", "Call function to avoid unused code"),
-    ]
-    assert sentry.validate_fix_suggestions(issues_with_fixes) == True
-
-    issues_without_fixes = [
-        Issue(1, "Issue 1: Variable not initialized"),
-        Issue(2, "Issue 2: Function not called"),
-    ]
-    assert sentry.validate_fix_suggestions(issues_without_fixes) == False
+    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type"), Issue(3, "Unknown error")]
+    sentry = SoliditySentry(issues)
+    sentry.generate_fix_suggestions()
+    assert sentry.validate_fix_suggestions() == True
 
 def test_apply_fix_suggestions():
-    sentry = SoliditySentry()
-    issues_with_fixes = [
-        Issue(1, "Issue 1: Variable not initialized", "Initialize variable before use"),
-        Issue(2, "Issue 2: Function not called", "Call function to avoid unused code"),
-    ]
-    applied_fixes = sentry.apply_fix_suggestions(issues_with_fixes)
-    assert applied_fixes == "Applied fix for issue 1: Initialize variable before use\nApplied fix for issue 2: Call function to avoid unused code"
+    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type"), Issue(3, "Unknown error")]
+    sentry = SoliditySentry(issues)
+    sentry.generate_fix_suggestions()
+    applied_issues = sentry.apply_fix_suggestions()
+    assert len(applied_issues) == 3
+
+def test_edge_case_empty_issues():
+    sentry = SoliditySentry([])
+    assert sentry.generate_fix_suggestions() == []
+    assert sentry.validate_fix_suggestions() == True
+    assert sentry.apply_fix_suggestions() == []

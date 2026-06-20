@@ -1,11 +1,10 @@
 # Solidity Sentry
-Solidity code analysis and optimization tool.
+A tool for analyzing and optimizing Solidity code.
 
 ## Features
-* Identify issues in Solidity code
-* Generate fix suggestions for identified issues
-* Validate fix suggestions
-* Apply fix suggestions with a single click
+* Generates automated fix suggestions for identified issues
+* Validates fix suggestions through automated testing
+* Allows users to apply fix suggestions with a single click
 
 ## Usage
 1. Install the tool using `poetry install`

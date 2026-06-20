@@ -9,35 +9,30 @@ class Issue:
     fix_suggestion: str = None
 
 class SoliditySentry:
-    def __init__(self):
-        self.issues = []
+    def __init__(self, issues: List[Issue]):
+        self.issues = issues
 
-    def identify_issues(self, code: str) -> List[Issue]:
-        # Simulate issue identification
-        issues = [
-            Issue(1, "Issue 1: Variable not initialized"),
-            Issue(2, "Issue 2: Function not called"),
-        ]
-        return issues
+    def generate_fix_suggestions(self):
+        for issue in self.issues:
+            if issue.description.startswith("Syntax error"):
+                issue.fix_suggestion = "Check syntax and fix errors"
+            elif issue.description.startswith("Type error"):
+                issue.fix_suggestion = "Check types and fix errors"
+            else:
+                issue.fix_suggestion = "Unknown error: please investigate"
+        return self.issues
 
-    def generate_fix_suggestions(self, issues: List[Issue]) -> List[Issue]:
-        for issue in issues:
-            if issue.id == 1:
-                issue.fix_suggestion = "Initialize variable before use"
-            elif issue.id == 2:
-                issue.fix_suggestion = "Call function to avoid unused code"
-        return issues
+    def validate_fix_suggestions(self):
+        if not self.issues:
+            return True
+        valid_issues = [issue for issue in self.issues if issue.fix_suggestion is not None]
+        return len(valid_issues) == len(self.issues)
 
-    def validate_fix_suggestions(self, issues: List[Issue]) -> bool:
-        valid = True
-        for issue in issues:
-            if issue.fix_suggestion is None:
-                valid = False
-                break
-        return valid
-
-    def apply_fix_suggestions(self, issues: List[Issue]) -> str:
-        applied_fixes = []
-        for issue in issues:
-            applied_fixes.append(f"Applied fix for issue {issue.id}: {issue.fix_suggestion}")
-        return "\n".join(applied_fixes)
+    def apply_fix_suggestions(self):
+        applied_issues = []
+        for issue in self.issues:
+            if issue.fix_suggestion is not None:
+                # Apply fix suggestion
+                print(f"Applied fix suggestion for issue {issue.id}")
+                applied_issues.append(issue)
+        return applied_issues
