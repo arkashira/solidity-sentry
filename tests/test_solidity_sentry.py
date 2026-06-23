@@ -1,28 +1,31 @@
 import pytest
-from solidity_sentry import SoliditySentry, Issue
+from src.solidity_sentry import SoliditySentry, TemplateSystem, AuditFinding, create_template_system
 
-def test_generate_fix_suggestions():
-    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type")]
-    sentry = SoliditySentry(issues)
-    issues_with_fixes = sentry.generate_fix_suggestions()
-    assert issues_with_fixes[0].fix_suggestion == "Check syntax and fix errors"
-    assert issues_with_fixes[1].fix_suggestion == "Check types and fix errors"
+def test_generate_findings():
+    template_system = TemplateSystem()
+    sentry = SoliditySentry(template_system)
+    issues = [
+        {
+            'description_template': 'Issue {{ issue_id }}: {{ issue_name }}',
+            'description_data': {'issue_id': 1, 'issue_name': 'Example Issue'},
+            'severity': 'high',
+            'remediation_link': 'https://example.com/remediation'
+        }
+    ]
+    findings = sentry.generate_findings(issues)
+    assert len(findings) == 1
+    finding = findings[0]
+    assert finding.description == 'Issue 1: Example Issue'
+    assert finding.severity == 'high'
+    assert finding.remediation_link == 'https://example.com/remediation'
 
-def test_validate_fix_suggestions():
-    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type"), Issue(3, "Unknown error")]
-    sentry = SoliditySentry(issues)
-    sentry.generate_fix_suggestions()
-    assert sentry.validate_fix_suggestions() == True
+def test_template_system_render():
+    template_system = TemplateSystem()
+    template = 'Hello, {{ name }}!'
+    data = {'name': 'John'}
+    rendered = template_system.render(template, data)
+    assert rendered == 'Hello, John!'
 
-def test_apply_fix_suggestions():
-    issues = [Issue(1, "Syntax error: missing semicolon"), Issue(2, "Type error: invalid type"), Issue(3, "Unknown error")]
-    sentry = SoliditySentry(issues)
-    sentry.generate_fix_suggestions()
-    applied_issues = sentry.apply_fix_suggestions()
-    assert len(applied_issues) == 3
-
-def test_edge_case_empty_issues():
-    sentry = SoliditySentry([])
-    assert sentry.generate_fix_suggestions() == []
-    assert sentry.validate_fix_suggestions() == True
-    assert sentry.apply_fix_suggestions() == []
+def test_create_template_system():
+    template_system = create_template_system()
+    assert isinstance(template_system, TemplateSystem)

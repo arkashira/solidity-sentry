@@ -3,36 +3,30 @@ from dataclasses import dataclass
 from typing import List
 
 @dataclass
-class Issue:
-    id: int
+class AuditFinding:
     description: str
-    fix_suggestion: str = None
+    severity: str
+    remediation_link: str
 
 class SoliditySentry:
-    def __init__(self, issues: List[Issue]):
-        self.issues = issues
+    def __init__(self, template_system):
+        self.template_system = template_system
 
-    def generate_fix_suggestions(self):
-        for issue in self.issues:
-            if issue.description.startswith("Syntax error"):
-                issue.fix_suggestion = "Check syntax and fix errors"
-            elif issue.description.startswith("Type error"):
-                issue.fix_suggestion = "Check types and fix errors"
-            else:
-                issue.fix_suggestion = "Unknown error: please investigate"
-        return self.issues
+    def generate_findings(self, issues: List[dict]) -> List[AuditFinding]:
+        findings = []
+        for issue in issues:
+            description = self.template_system.render(issue['description_template'], issue['description_data'])
+            severity = issue['severity']
+            remediation_link = issue['remediation_link']
+            finding = AuditFinding(description, severity, remediation_link)
+            findings.append(finding)
+        return findings
 
-    def validate_fix_suggestions(self):
-        if not self.issues:
-            return True
-        valid_issues = [issue for issue in self.issues if issue.fix_suggestion is not None]
-        return len(valid_issues) == len(self.issues)
+class TemplateSystem:
+    def render(self, template: str, data: dict) -> str:
+        for key, value in data.items():
+            template = template.replace(f'{{{{ {key} }}}}', str(value))
+        return template
 
-    def apply_fix_suggestions(self):
-        applied_issues = []
-        for issue in self.issues:
-            if issue.fix_suggestion is not None:
-                # Apply fix suggestion
-                print(f"Applied fix suggestion for issue {issue.id}")
-                applied_issues.append(issue)
-        return applied_issues
+def create_template_system() -> TemplateSystem:
+    return TemplateSystem()
