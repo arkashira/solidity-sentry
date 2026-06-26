@@ -1,32 +1,38 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from datetime import datetime, timedelta
 
 @dataclass
-class AuditFinding:
-    description: str
-    severity: str
-    remediation_link: str
+class Seat:
+    id: int
+    usage: int
+
+@dataclass
+class Billing:
+    seats: list
+    next_billing_date: str
+    projected_monthly_cost: float
 
 class SoliditySentry:
-    def __init__(self, template_system):
-        self.template_system = template_system
+    def __init__(self):
+        self.seats = []
+        self.billing_history = []
 
-    def generate_findings(self, issues: List[dict]) -> List[AuditFinding]:
-        findings = []
-        for issue in issues:
-            description = self.template_system.render(issue['description_template'], issue['description_data'])
-            severity = issue['severity']
-            remediation_link = issue['remediation_link']
-            finding = AuditFinding(description, severity, remediation_link)
-            findings.append(finding)
-        return findings
+    def add_seat(self, seat):
+        self.seats.append(seat)
+        self.billing_history.append({"action": "add", "seat_id": seat.id})
 
-class TemplateSystem:
-    def render(self, template: str, data: dict) -> str:
-        for key, value in data.items():
-            template = template.replace(f'{{{{ {key} }}}}', str(value))
-        return template
+    def remove_seat(self, seat_id):
+        self.seats = [seat for seat in self.seats if seat.id != seat_id]
+        self.billing_history.append({"action": "remove", "seat_id": seat_id})
 
-def create_template_system() -> TemplateSystem:
-    return TemplateSystem()
+    def get_billing(self):
+        next_billing_date = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        projected_monthly_cost = len(self.seats) * 10.0
+        return Billing(self.seats, next_billing_date, projected_monthly_cost)
+
+    def log_billing_action(self, action, seat_id):
+        self.billing_history.append({"action": action, "seat_id": seat_id})
+
+    def get_billing_history(self):
+        return self.billing_history

@@ -1,31 +1,40 @@
-import pytest
-from src.solidity_sentry import SoliditySentry, TemplateSystem, AuditFinding, create_template_system
+from datetime import datetime, timedelta
+from solidity_sentry import SoliditySentry, Seat, Billing
 
-def test_generate_findings():
-    template_system = TemplateSystem()
-    sentry = SoliditySentry(template_system)
-    issues = [
-        {
-            'description_template': 'Issue {{ issue_id }}: {{ issue_name }}',
-            'description_data': {'issue_id': 1, 'issue_name': 'Example Issue'},
-            'severity': 'high',
-            'remediation_link': 'https://example.com/remediation'
-        }
-    ]
-    findings = sentry.generate_findings(issues)
-    assert len(findings) == 1
-    finding = findings[0]
-    assert finding.description == 'Issue 1: Example Issue'
-    assert finding.severity == 'high'
-    assert finding.remediation_link == 'https://example.com/remediation'
+def test_add_seat():
+    sentry = SoliditySentry()
+    seat = Seat(1, 10)
+    sentry.add_seat(seat)
+    assert len(sentry.seats) == 1
+    assert sentry.seats[0].id == 1
 
-def test_template_system_render():
-    template_system = TemplateSystem()
-    template = 'Hello, {{ name }}!'
-    data = {'name': 'John'}
-    rendered = template_system.render(template, data)
-    assert rendered == 'Hello, John!'
+def test_remove_seat():
+    sentry = SoliditySentry()
+    seat = Seat(1, 10)
+    sentry.add_seat(seat)
+    sentry.remove_seat(1)
+    assert len(sentry.seats) == 0
 
-def test_create_template_system():
-    template_system = create_template_system()
-    assert isinstance(template_system, TemplateSystem)
+def test_get_billing():
+    sentry = SoliditySentry()
+    seat = Seat(1, 10)
+    sentry.add_seat(seat)
+    billing = sentry.get_billing()
+    assert len(billing.seats) == 1
+    assert billing.next_billing_date == (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+    assert billing.projected_monthly_cost == 10.0
+
+def test_log_billing_action():
+    sentry = SoliditySentry()
+    sentry.log_billing_action("add", 1)
+    assert len(sentry.get_billing_history()) == 1
+    assert sentry.get_billing_history()[0]["action"] == "add"
+    assert sentry.get_billing_history()[0]["seat_id"] == 1
+
+def test_get_billing_history():
+    sentry = SoliditySentry()
+    sentry.log_billing_action("add", 1)
+    sentry.log_billing_action("remove", 2)
+    assert len(sentry.get_billing_history()) == 2
+    assert sentry.get_billing_history()[0]["action"] == "add"
+    assert sentry.get_billing_history()[1]["action"] == "remove"
